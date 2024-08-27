@@ -1,0 +1,3 @@
+XTerm*backarrowKey: false
+XTerm*VT100.Translations: #override\n\
+    <KeyPress> BackSpace: string(0x7F)
