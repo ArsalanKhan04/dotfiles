@@ -23,7 +23,12 @@ require('mason-lspconfig').setup({
                     }
                 }
             })
-        end
+        end,
+        tsserver = function()
+          require('lspconfig').ts_ls.setup({
+              -- Add specific configuration for ts_ls if needed
+          })
+        end,
 	},
 
 })
