@@ -22,5 +22,7 @@ eval "$(zoxide init --cmd cd bash)"
 . "$HOME/.cargo/env"
 
 alias tsm="transmission-remote"
+alias nvcpf="nvim -c 'lua SPL(true)'"
+alias nvcp="nvim -c 'lua SPL(false)'"
 
 neofetch
