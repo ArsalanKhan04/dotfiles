@@ -1,5 +1,4 @@
-/usr/bin/pipewire &
-/usr/bin/pipewire-pulse &
-/user/bin/wireplumber &
 xclip -selection clipboard -rmlastnl &
+# ./.screenlayout/as2.sh
+# ./.screenlayout/as.sh
 xrdb -merge .Xresources

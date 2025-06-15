@@ -6,7 +6,7 @@ require('mason').setup({})
 require('mason-lspconfig').setup({
 	-- Replace the language servers listed here 
 	-- with the ones you want to install
-	ensure_installed = {'tsserver', 'rust_analyzer',  'pyright', 'texlab'},
+	ensure_installed = {'tsserver', 'rust_analyzer',  'pyright', 'texlab', 'clangd'},
 	handlers = {
         function(server_name)
             require('lspconfig')[server_name].setup({})
@@ -29,6 +29,20 @@ require('mason-lspconfig').setup({
               -- Add specific configuration for ts_ls if needed
           })
         end,
+
+        clangd = function()
+        require('lspconfig').clangd.setup({
+            cmd = {
+                "clangd",
+                "--background-index",
+                "--compile-commands-dir=~/Files/opensource/libreoffice/",
+                "--log=verbose",
+                "--all-scopes-completion"
+            },
+            root_dir = require('lspconfig.util').root_pattern("compile_commands.json", ".git"),
+            capabilities = require('cmp_nvim_lsp').default_capabilities()
+        })
+      end,
 	},
 
 })

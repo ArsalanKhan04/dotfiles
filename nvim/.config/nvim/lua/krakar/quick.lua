@@ -30,12 +30,15 @@ function SPL(load_temp)
 
   -- Split the right pane into 3 rows and open input.txt, output.txt, and debug.txt
   vim.cmd('split input.txt')
+  vim.cmd('w')
   vim.cmd('wincmd j')
 
   vim.cmd('split output.txt')
+  vim.cmd('w')
   vim.cmd('wincmd j')
 
   vim.cmd('e debug.txt')
+  vim.cmd('w')
   vim.cmd('wincmd j')
 
   -- Move back to the topmost pane (input.txt)

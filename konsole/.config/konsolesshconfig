@@ -1,2 +1,12 @@
 [Global plugin config]
 manageProfile=false
+
+[SSH Config][gerrit.libreoffice.org]
+hostname=gerrit.libreoffice.org
+identifier=gerrit.libreoffice.org
+importedFromSshConfig=true
+port=29418
+profileName=
+sshkey=~/.ssh/id_rsa
+useSshConfig=true
+username=krakar

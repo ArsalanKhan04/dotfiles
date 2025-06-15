@@ -26,3 +26,15 @@ alias nvcpf="nvim -c 'lua SPL(true)'"
 alias nvcp="nvim -c 'lua SPL(false)'"
 
 neofetch
+
+alias get_idf=". /home/krakar/esp/esp-idf/export.sh"
+
+export CLOUDSDK_ROOT_DIR=/opt/google-cloud-cli
+export CLOUDSDK_PYTHON=/usr/bin/python
+export CLOUDSDK_PYTHON_ARGS='-S -W ignore'
+export PATH=$CLOUDSDK_ROOT_DIR/bin:$PATH
+export GOOGLE_CLOUD_SDK_HOME=$CLOUDSDK_ROOT_DIR
+
+alias cfprobs="python /home/krakar/Files/CP/getprobs.py"
+
+source /home/krakar/.config/broot/launcher/bash/br
