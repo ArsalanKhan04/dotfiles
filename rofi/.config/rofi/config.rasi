@@ -14,5 +14,13 @@ configuration{
     sidebar-mode: true;
 }
 
-@theme "catppuccin-mocha"
+//@theme "catppuccin-mocha"
 
+
+//@theme "/usr/share/rofi/themes/gruvbox-dark-hard.rasi"
+
+//@theme "/usr/share/rofi/themes/android_notification.rasi"
+
+//@theme "/usr/share/rofi/themes/Arc-Dark.rasi"
+
+@theme "/usr/share/rofi/themes/android_notification.rasi"

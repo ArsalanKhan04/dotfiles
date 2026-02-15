@@ -57,21 +57,36 @@ return {
     build = ":TSUpdate",
     event = { "BufReadPost", "BufNewFile" },
     config = function()
-      require("nvim-treesitter.configs").setup({
-        ensure_installed = {
-          "lua", "vim", "vimdoc", "query",
-          "javascript", "typescript", "python",
-          "c", "cpp", "rust",
-          "latex", "matlab", "php",
-          "markdown", "markdown_inline",
-        },
-        sync_install = false,
-        auto_install = true,
-        highlight = {
-          enable = true,
-          disable = { "latex", "txt" },
-          additional_vim_regex_highlighting = false,
-        },
+      -- Install parsers (new nvim-treesitter API)
+      local parsers = {
+        "lua", "vim", "vimdoc", "query",
+        "javascript", "typescript", "python",
+        "c", "cpp", "rust",
+        "latex", "matlab", "php",
+        "markdown", "markdown_inline",
+      }
+
+      -- Auto-install missing parsers when entering buffer
+      vim.api.nvim_create_autocmd("FileType", {
+        callback = function()
+          local ft = vim.bo.filetype
+          local lang = vim.treesitter.language.get_lang(ft) or ft
+          if vim.tbl_contains(parsers, lang) then
+            pcall(function()
+              if not pcall(vim.treesitter.language.inspect, lang) then
+                vim.cmd("TSInstall " .. lang)
+              end
+            end)
+          end
+        end,
+      })
+
+      -- Disable treesitter highlight for latex (use vimtex instead)
+      vim.api.nvim_create_autocmd("FileType", {
+        pattern = { "tex", "latex" },
+        callback = function()
+          vim.treesitter.stop()
+        end,
       })
     end,
   },
@@ -249,7 +264,35 @@ return {
   -- ============================================================================
   {
     "github/copilot.vim",
+    cmd = "Copilot",
     event = "InsertEnter",
+    config = function()
+      -- Disable default Tab mapping (we'll use a different key)
+      vim.g.copilot_no_tab_map = true
+
+      -- Accept suggestion with Ctrl-J
+      vim.keymap.set("i", "<C-j>", 'copilot#Accept("\\<CR>")', {
+        expr = true,
+        replace_keycodes = false,
+        silent = true,
+      })
+
+      -- Navigate suggestions
+      vim.keymap.set("i", "<M-]>", "<Plug>(copilot-next)", { silent = true })
+      vim.keymap.set("i", "<M-[>", "<Plug>(copilot-previous)", { silent = true })
+
+      -- Dismiss suggestion
+      vim.keymap.set("i", "<C-\\>", "<Plug>(copilot-dismiss)", { silent = true })
+
+      -- Disable for certain filetypes
+      vim.g.copilot_filetypes = {
+        ["*"] = true,
+        ["markdown"] = true,
+        ["text"] = false,
+        ["gitcommit"] = false,
+        ["gitrebase"] = false,
+      }
+    end,
   },
 
   -- ============================================================================
