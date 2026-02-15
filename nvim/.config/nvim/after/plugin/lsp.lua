@@ -1,84 +1,33 @@
-local lsp = require("lsp-zero")
+-- LSP Configuration (without lsp-zero)
+local lspconfig = require("lspconfig")
+local cmp_nvim_lsp = require("cmp_nvim_lsp")
 
-lsp.preset("recommended")
+-- Diagnostic signs
+local signs = { Error = "E", Warn = "W", Hint = "H", Info = "I" }
+for type, icon in pairs(signs) do
+  local hl = "DiagnosticSign" .. type
+  vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = "" })
+end
 
-require('mason').setup({})
-require('mason-lspconfig').setup({
-	-- Replace the language servers listed here 
-	-- with the ones you want to install
-	ensure_installed = {'tsserver', 'rust_analyzer',  'pyright', 'texlab', 'clangd'},
-	handlers = {
-        function(server_name)
-            require('lspconfig')[server_name].setup({})
-        end,
-        rust_analyzer = function()
-            require('lspconfig').rust_analyzer.setup({
-                filetypes= {'rust'},
-                root_dir = require('lspconfig/util').root_pattern("Cargo.toml"),
-                settings = {
-                    ["rust-analyzer"] = {
-                        checkOnSave = {
-                            command = "clippy"
-                        }
-                    }
-                }
-            })
-        end,
-        tsserver = function()
-          require('lspconfig').ts_ls.setup({
-              -- Add specific configuration for ts_ls if needed
-          })
-        end,
-
-        clangd = function()
-        require('lspconfig').clangd.setup({
-            cmd = {
-                "clangd",
-                "--background-index",
-                "--compile-commands-dir=~/Files/opensource/libreoffice/",
-                "--log=verbose",
-                "--all-scopes-completion"
-            },
-            root_dir = require('lspconfig.util').root_pattern("compile_commands.json", ".git"),
-            capabilities = require('cmp_nvim_lsp').default_capabilities()
-        })
-      end,
-	},
-
-})
--- Fix Undefined global 'vim'
-local lua_opts = lsp.nvim_lua_ls()
-require('lspconfig').lua_ls.setup(lua_opts)
-
-
-local cmp = require('cmp')
-local cmp_select = {behavior = cmp.SelectBehavior.Select}
-local cmp_mappings = lsp.defaults.cmp_mappings({
-  ['<C-p>'] = cmp.mapping.select_prev_item(cmp_select),
-  ['<C-n>'] = cmp.mapping.select_next_item(cmp_select),
-  ['<C-y>'] = cmp.mapping.confirm({ select = true }),
-  ["<C-Space>"] = cmp.mapping.complete(),
+-- Diagnostic config
+vim.diagnostic.config({
+  virtual_text = true,
+  signs = true,
+  underline = true,
+  update_in_insert = false,
+  severity_sort = true,
+  float = {
+    border = "rounded",
+    source = "always",
+  },
 })
 
-cmp_mappings['<Tab>'] = nil
-cmp_mappings['<S-Tab>'] = nil
+-- LSP capabilities with nvim-cmp
+local capabilities = cmp_nvim_lsp.default_capabilities()
 
-cmp.setup({
-  mapping = cmp_mappings
-})
-
-lsp.set_preferences({
-    suggest_lsp_servers = false,
-    sign_icons = {
-        error = 'E',
-        warn = 'W',
-        hint = 'H',
-        info = 'I'
-    }
-})
-
-lsp.on_attach(function(client, bufnr)
-  local opts = {buffer = bufnr, remap = false}
+-- On attach function for keymaps
+local on_attach = function(client, bufnr)
+  local opts = { buffer = bufnr, remap = false }
 
   vim.keymap.set("n", "gd", function() vim.lsp.buf.definition() end, opts)
   vim.keymap.set("n", "K", function() vim.lsp.buf.hover() end, opts)
@@ -90,11 +39,83 @@ lsp.on_attach(function(client, bufnr)
   vim.keymap.set("n", "<leader>vrr", function() vim.lsp.buf.references() end, opts)
   vim.keymap.set("n", "<leader>vrn", function() vim.lsp.buf.rename() end, opts)
   vim.keymap.set("i", "<C-h>", function() vim.lsp.buf.signature_help() end, opts)
-end)
+end
 
-lsp.setup()
+-- ============================================================================
+-- Language Server Configurations
+-- ============================================================================
 
-vim.diagnostic.config({
-    virtual_text = true
+-- Lua
+lspconfig.lua_ls.setup({
+  capabilities = capabilities,
+  on_attach = on_attach,
+  settings = {
+    Lua = {
+      runtime = { version = "LuaJIT" },
+      diagnostics = {
+        globals = { "vim" },
+      },
+      workspace = {
+        library = vim.api.nvim_get_runtime_file("", true),
+        checkThirdParty = false,
+      },
+      telemetry = { enable = false },
+    },
+  },
 })
 
+-- Rust
+lspconfig.rust_analyzer.setup({
+  capabilities = capabilities,
+  on_attach = on_attach,
+  filetypes = { "rust" },
+  root_dir = lspconfig.util.root_pattern("Cargo.toml"),
+  settings = {
+    ["rust-analyzer"] = {
+      checkOnSave = {
+        command = "clippy",
+      },
+      cargo = {
+        allFeatures = true,
+      },
+    },
+  },
+})
+
+-- Python
+lspconfig.pyright.setup({
+  capabilities = capabilities,
+  on_attach = on_attach,
+})
+
+-- TypeScript/JavaScript
+lspconfig.ts_ls.setup({
+  capabilities = capabilities,
+  on_attach = on_attach,
+})
+
+-- C/C++
+lspconfig.clangd.setup({
+  capabilities = capabilities,
+  on_attach = on_attach,
+  cmd = {
+    "clangd",
+    "--background-index",
+    "--clang-tidy",
+    "--header-insertion=iwyu",
+    "--completion-style=detailed",
+    "--function-arg-placeholders",
+    "--fallback-style=llvm",
+  },
+  root_dir = lspconfig.util.root_pattern(
+    "compile_commands.json",
+    "compile_flags.txt",
+    ".git"
+  ),
+})
+
+-- LaTeX
+lspconfig.texlab.setup({
+  capabilities = capabilities,
+  on_attach = on_attach,
+})
