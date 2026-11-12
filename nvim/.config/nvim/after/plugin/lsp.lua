@@ -1,100 +1,97 @@
-local lsp = require("lsp-zero")
+-- Native LSP setup (Neovim 0.11+), replaces lsp-zero.
+-- mason installs servers; mason-lspconfig v2 auto-runs vim.lsp.enable() for
+-- every installed server. Per-server tweaks go through vim.lsp.config().
 
-lsp.preset("recommended")
+local capabilities = require("cmp_nvim_lsp").default_capabilities()
 
-require('mason').setup({})
-require('mason-lspconfig').setup({
-	-- Replace the language servers listed here 
-	-- with the ones you want to install
-	ensure_installed = {'tsserver', 'rust_analyzer',  'pyright', 'texlab', 'clangd'},
-	handlers = {
-        function(server_name)
-            require('lspconfig')[server_name].setup({})
-        end,
-        rust_analyzer = function()
-            require('lspconfig').rust_analyzer.setup({
-                filetypes= {'rust'},
-                root_dir = require('lspconfig/util').root_pattern("Cargo.toml"),
-                settings = {
-                    ["rust-analyzer"] = {
-                        checkOnSave = {
-                            command = "clippy"
-                        }
-                    }
-                }
-            })
-        end,
-        tsserver = function()
-          require('lspconfig').ts_ls.setup({
-              -- Add specific configuration for ts_ls if needed
-          })
-        end,
-
-        clangd = function()
-        require('lspconfig').clangd.setup({
-            cmd = {
-                "clangd",
-                "--background-index",
-                "--compile-commands-dir=~/Files/opensource/libreoffice/",
-                "--log=verbose",
-                "--all-scopes-completion"
-            },
-            root_dir = require('lspconfig.util').root_pattern("compile_commands.json", ".git"),
-            capabilities = require('cmp_nvim_lsp').default_capabilities()
-        })
-      end,
-	},
-
-})
--- Fix Undefined global 'vim'
-local lua_opts = lsp.nvim_lua_ls()
-require('lspconfig').lua_ls.setup(lua_opts)
-
-
-local cmp = require('cmp')
-local cmp_select = {behavior = cmp.SelectBehavior.Select}
-local cmp_mappings = lsp.defaults.cmp_mappings({
-  ['<C-p>'] = cmp.mapping.select_prev_item(cmp_select),
-  ['<C-n>'] = cmp.mapping.select_next_item(cmp_select),
-  ['<C-y>'] = cmp.mapping.confirm({ select = true }),
-  ["<C-Space>"] = cmp.mapping.complete(),
+-- Defaults applied to every server.
+vim.lsp.config("*", {
+  capabilities = capabilities,
 })
 
-cmp_mappings['<Tab>'] = nil
-cmp_mappings['<S-Tab>'] = nil
+-- Per-server overrides (merged over nvim-lspconfig's shipped defaults).
+vim.lsp.config("rust_analyzer", {
+  filetypes = { "rust" },
+  settings = {
+    ["rust-analyzer"] = {
+      checkOnSave = { command = "clippy" },
+    },
+  },
+})
+
+vim.lsp.config("clangd", {
+  cmd = {
+    "clangd",
+    "--background-index",
+    "--compile-commands-dir=~/Files/opensource/libreoffice/",
+    "--all-scopes-completion",
+  },
+})
+
+vim.lsp.config("lua_ls", {
+  settings = {
+    Lua = {
+      diagnostics = { globals = { "vim" } },
+      workspace = { checkThirdParty = false },
+    },
+  },
+})
+
+require("mason").setup({})
+require("mason-lspconfig").setup({
+  ensure_installed = { "ts_ls", "rust_analyzer", "pyright", "texlab", "clangd", "lua_ls" },
+  automatic_enable = true,
+})
+
+-- Completion
+local cmp = require("cmp")
+local cmp_select = { behavior = cmp.SelectBehavior.Select }
 
 cmp.setup({
-  mapping = cmp_mappings
+  snippet = {
+    expand = function(args) require("luasnip").lsp_expand(args.body) end,
+  },
+  sources = {
+    { name = "nvim_lsp" },
+    { name = "luasnip" },
+    { name = "path" },
+    { name = "buffer" },
+  },
+  mapping = cmp.mapping.preset.insert({
+    ["<C-p>"] = cmp.mapping.select_prev_item(cmp_select),
+    ["<C-n>"] = cmp.mapping.select_next_item(cmp_select),
+    ["<C-y>"] = cmp.mapping.confirm({ select = true }),
+    ["<C-Space>"] = cmp.mapping.complete(),
+    -- <Tab>/<S-Tab> intentionally left unmapped (preset.insert does not map them)
+  }),
 })
 
-lsp.set_preferences({
-    suggest_lsp_servers = false,
-    sign_icons = {
-        error = 'E',
-        warn = 'W',
-        hint = 'H',
-        info = 'I'
-    }
+-- Buffer-local keymaps when a server attaches (was lsp.on_attach)
+vim.api.nvim_create_autocmd("LspAttach", {
+  callback = function(event)
+    local opts = { buffer = event.buf, remap = false }
+
+    vim.keymap.set("n", "gd", function() vim.lsp.buf.definition() end, opts)
+    vim.keymap.set("n", "K", function() vim.lsp.buf.hover() end, opts)
+    vim.keymap.set("n", "<leader>vws", function() vim.lsp.buf.workspace_symbol() end, opts)
+    vim.keymap.set("n", "<leader>vd", function() vim.diagnostic.open_float() end, opts)
+    vim.keymap.set("n", "[d", function() vim.diagnostic.jump({ count = 1 }) end, opts)
+    vim.keymap.set("n", "]d", function() vim.diagnostic.jump({ count = -1 }) end, opts)
+    vim.keymap.set("n", "<leader>vca", function() vim.lsp.buf.code_action() end, opts)
+    vim.keymap.set("n", "<leader>vrr", function() vim.lsp.buf.references() end, opts)
+    vim.keymap.set("n", "<leader>vrn", function() vim.lsp.buf.rename() end, opts)
+    vim.keymap.set("i", "<C-h>", function() vim.lsp.buf.signature_help() end, opts)
+  end,
 })
-
-lsp.on_attach(function(client, bufnr)
-  local opts = {buffer = bufnr, remap = false}
-
-  vim.keymap.set("n", "gd", function() vim.lsp.buf.definition() end, opts)
-  vim.keymap.set("n", "K", function() vim.lsp.buf.hover() end, opts)
-  vim.keymap.set("n", "<leader>vws", function() vim.lsp.buf.workspace_symbol() end, opts)
-  vim.keymap.set("n", "<leader>vd", function() vim.diagnostic.open_float() end, opts)
-  vim.keymap.set("n", "[d", function() vim.diagnostic.goto_next() end, opts)
-  vim.keymap.set("n", "]d", function() vim.diagnostic.goto_prev() end, opts)
-  vim.keymap.set("n", "<leader>vca", function() vim.lsp.buf.code_action() end, opts)
-  vim.keymap.set("n", "<leader>vrr", function() vim.lsp.buf.references() end, opts)
-  vim.keymap.set("n", "<leader>vrn", function() vim.lsp.buf.rename() end, opts)
-  vim.keymap.set("i", "<C-h>", function() vim.lsp.buf.signature_help() end, opts)
-end)
-
-lsp.setup()
 
 vim.diagnostic.config({
-    virtual_text = true
+  virtual_text = true,
+  signs = {
+    text = {
+      [vim.diagnostic.severity.ERROR] = "E",
+      [vim.diagnostic.severity.WARN] = "W",
+      [vim.diagnostic.severity.HINT] = "H",
+      [vim.diagnostic.severity.INFO] = "I",
+    },
+  },
 })
-

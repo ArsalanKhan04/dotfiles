@@ -38,3 +38,13 @@ export GOOGLE_CLOUD_SDK_HOME=$CLOUDSDK_ROOT_DIR
 alias cfprobs="python /home/krakar/Files/CP/getprobs.py"
 
 source /home/krakar/.config/broot/launcher/bash/br
+
+export PYENV_ROOT="$HOME/.pyenv"
+[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init - bash)"
+eval "$(pyenv virtualenv-init - bash)"
+
+export PATH="$HOME/.local/bin:$PATH"
+
+export CHROME_EXECUTABLE=/usr/bin/google-chrome-stable
+export UV_INDEX_URL=https://mirror.yandex.ru/pypi/simple/
