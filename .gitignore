@@ -1,3 +1,4 @@
 i3/.config/i3/bumblebee-status/
 node_modules
 *.json
+!nvim/.config/nvim/lazy-lock.json

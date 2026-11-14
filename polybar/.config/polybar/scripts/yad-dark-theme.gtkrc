@@ -1,0 +1,15 @@
+style "dark"
+{
+    bg[NORMAL] = "#2e3440"
+    fg[NORMAL] = "#d8dee9"
+    base[NORMAL] = "#3b4252"
+    text[NORMAL] = "#eceff4"
+
+    bg[ACTIVE] = "#434c5e"
+    fg[ACTIVE] = "#ffffff"
+
+    bg[PRELIGHT] = "#5e81ac"
+    fg[PRELIGHT] = "#ffffff"
+}
+class "*" style "dark"
+

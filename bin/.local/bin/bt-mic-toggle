@@ -1,0 +1,13 @@
+#!/bin/bash
+
+CARD="bluez_card.00_BB_43_BA_A2_C5"
+
+CURRENT=$(pactl list cards | grep -A 30 "$CARD" | grep "Active Profile" | awk '{print $3}')
+
+if [[ "$CURRENT" == a2dp* ]]; then
+    pactl set-card-profile "$CARD" headset-head-unit-cvsd
+    notify-send -i audio-headset-bluetooth "Bluetooth Mic ON" "Switched to HFP — mic enabled, lower audio quality"
+else
+    pactl set-card-profile "$CARD" a2dp-sink
+    notify-send -i audio-headset-bluetooth "Bluetooth Mic OFF" "Switched to A2DP — high quality audio, no mic"
+fi
